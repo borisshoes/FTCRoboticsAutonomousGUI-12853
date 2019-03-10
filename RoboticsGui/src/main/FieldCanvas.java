@@ -9,9 +9,12 @@ import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 
 import javax.imageio.ImageIO;
@@ -19,6 +22,7 @@ import javax.imageio.ImageIO;
 import shapes.Dot;
 import shapes.Line;
 import shapes.Shape;
+import shapes.StartPoint;
 
 public class FieldCanvas extends Canvas{
 	
@@ -28,13 +32,14 @@ public class FieldCanvas extends Canvas{
 	public void paint(Graphics g) {
 		Graphics2D g2 = (Graphics2D) g;
 		
-		BufferedImage fieldBG;
+		Image fieldBG;
 		try {
-			fieldBG = ImageIO.read(new File("src\\Field.png"));
+			URL url = FieldCanvas.class.getResource("/resources/Field.png");
+			fieldBG = Toolkit.getDefaultToolkit().getImage(url);
 			g.drawImage(fieldBG, 0, 0, this);
 
 		}
-		catch (IOException e) {
+		catch (Exception e) {
 			e.printStackTrace();
 		}
 		

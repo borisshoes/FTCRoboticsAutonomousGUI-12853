@@ -10,6 +10,9 @@ import java.awt.EventQueue;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.BoxLayout;
 import javax.swing.JFrame;
@@ -17,26 +20,53 @@ import javax.swing.JFrame;
 import shapes.Dot;
 import shapes.Line;
 import shapes.Shape;
+import shapes.StartPoint;
+
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.SwingConstants;
+
+import commands.Command;
+
 import java.awt.Dimension;
 import java.awt.Panel;
 import javax.swing.JButton;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import javax.swing.JTextField;
+import javax.swing.JCheckBox;
 
 public class MainWindow implements MouseListener, MouseMotionListener, ActionListener{
 
+	private final int RADIUS = 10;
+	
 	private JFrame frame;
 	private FieldCanvas canvas;
 	private JLabel coordLabel;
 	private JButton modeButton;
 	private JButton clearButton;
+	private JLabel startPosLabel;
+	private JLabel startXLabel;
+	private JTextField startXField;
+	private JLabel startALabel;
+	private JTextField startAField;
+	private JLabel startYLabel;
+	private JTextField startYField;
+	private JButton setStartPosButton;
+	private JTextField strafeTextField;
+	private JLabel lblStrafeAngle;
+	private JCheckBox chckbxStrafe;
+	private JButton programButton;
+	private JLabel lblSave;
+	private JTextField saveTextField;
 	
+	private boolean startPointSet = false;
 	private boolean drawing = false;
+	private int startPosX;
+	private int startPosY;
+	private int startPosA;
 	private int x1 = -1;
 	private int x2 = -1;
 	private int y1 = -1;
@@ -45,8 +75,11 @@ public class MainWindow implements MouseListener, MouseMotionListener, ActionLis
 	private int pressY = -1;
 	private int releaseX = -1;
 	private int releaseY = -1;
-	private int mode = 0; //0 Freeform, 1 Continuous Line
-
+	private int mode = 0; //0 Freeform, 1 Continuous Line, 2 Programming
+	
+	private ArrayList<ProgramPoint> programPoints = new ArrayList<ProgramPoint>();
+	
+	
 	/**
 	 * Launch the application.
 	 */
@@ -106,7 +139,7 @@ public class MainWindow implements MouseListener, MouseMotionListener, ActionLis
 		coordLabel.setBounds(10, 11, 259, 35);
 		panel.add(coordLabel);
 		
-		modeButton = new JButton("Set Mode to (Continuous)");
+		modeButton = new JButton("Set Mode (Current: Freeform)");
 		modeButton.addActionListener(this);
 		modeButton.setBounds(10, 57, 259, 35);
 		panel.add(modeButton);
@@ -115,20 +148,108 @@ public class MainWindow implements MouseListener, MouseMotionListener, ActionLis
 		clearButton.addActionListener(this);
 		clearButton.setBounds(10, 103, 259, 35);
 		panel.add(clearButton);
+		
+		startPosLabel = new JLabel("Start Pos: x, y | Start Angle: a\u00B0");
+		startPosLabel.setHorizontalAlignment(SwingConstants.CENTER);
+		startPosLabel.setBounds(10, 149, 259, 35);
+		panel.add(startPosLabel);
+		
+		startXField = new JTextField();
+		startXField.setEditable(false);
+		startXField.setBounds(40, 195, 50, 20);
+		panel.add(startXField);
+		startXField.setColumns(10);
+		
+		startXLabel = new JLabel("X: ");
+		startXLabel.setBounds(20, 195, 20, 20);
+		panel.add(startXLabel);
+		
+		startALabel = new JLabel("A: ");
+		startALabel.setBounds(180, 195, 20, 20);
+		panel.add(startALabel);
+		
+		startAField = new JTextField();
+		startAField.setEditable(false);
+		startAField.setColumns(10);
+		startAField.setBounds(200, 195, 50, 20);
+		panel.add(startAField);
+		
+		startYLabel = new JLabel("Y: ");
+		startYLabel.setBounds(100, 195, 20, 20);
+		panel.add(startYLabel);
+		
+		startYField = new JTextField();
+		startYField.setEditable(false);
+		startYField.setColumns(10);
+		startYField.setBounds(120, 195, 50, 20);
+		panel.add(startYField);
+		
+		setStartPosButton = new JButton("Set Start Position");
+		setStartPosButton.setEnabled(false);
+		setStartPosButton.setBounds(10, 226, 259, 35);
+		setStartPosButton.addActionListener(this);
+		panel.add(setStartPosButton);
+		
+		JLabel lblStrafeSettings = new JLabel("Strafe Settings");
+		lblStrafeSettings.setHorizontalAlignment(SwingConstants.CENTER);
+		lblStrafeSettings.setBounds(10, 271, 259, 14);
+		panel.add(lblStrafeSettings);
+		
+		chckbxStrafe = new JCheckBox("Strafe");
+		chckbxStrafe.setEnabled(false);
+		chckbxStrafe.setBounds(10, 292, 60, 23);
+		chckbxStrafe.addActionListener(this);
+		panel.add(chckbxStrafe);
+		
+		lblStrafeAngle = new JLabel("Strafe Angle (90\u00B0 \u00B1 X):");
+		lblStrafeAngle.setBounds(76, 296, 144, 14);
+		panel.add(lblStrafeAngle);
+		
+		strafeTextField = new JTextField();
+		strafeTextField.setEditable(false);
+		strafeTextField.setColumns(10);
+		strafeTextField.setBounds(219, 293, 50, 20);
+		strafeTextField.addActionListener(this);
+		panel.add(strafeTextField);
+		
+		programButton = new JButton("PROGRAM!");
+		programButton.setEnabled(false);
+		programButton.setBounds(10, 531, 259, 35);
+		programButton.addActionListener(this);
+		panel.add(programButton);
+		
+		saveTextField = new JTextField();
+		saveTextField.setEditable(false);
+		saveTextField.setBounds(10, 500, 259, 20);
+		panel.add(saveTextField);
+		saveTextField.setColumns(10);
+		
+		lblSave = new JLabel("Program Destination Location");
+		lblSave.setHorizontalAlignment(SwingConstants.CENTER);
+		lblSave.setBounds(10, 469, 259, 20);
+		panel.add(lblSave);
+	}
+	
+	public void addStartPoint(int x, int y, int a) {
+		Shape newShape = new StartPoint(x - RADIUS/2, y -RADIUS/2, a);
+		canvas.addShape(newShape);
+		canvas.drawShape(canvas.getGraphics(), newShape);
 	}
 	
 	public void addDot(int x, int y) {
-		int radius = 10;
-		Shape newShape = new Dot(x - radius/2, y -radius/2, radius, Color.BLACK, new BasicStroke(1), true);
+		Shape newShape = new Dot(x - RADIUS/2, y -RADIUS/2, RADIUS, Color.BLACK, new BasicStroke(1), true);
 		canvas.addShape(newShape);
 		canvas.drawShape(canvas.getGraphics(), newShape);
-		//canvas.repaint();
 	}
 	
 	public void addLine(int x1, int y1, int x2, int y2) {
 		Shape newShape = new Line(x1, y1, x2, y2);
 		canvas.addShape(newShape);
 		canvas.drawShape(canvas.getGraphics(), newShape);
+	}
+	
+	public void setStartPosition() {
+		
 	}
 	
 	public void afterDrawing() {
@@ -145,33 +266,34 @@ public class MainWindow implements MouseListener, MouseMotionListener, ActionLis
 				}else{
 					addLine(x1, y1, releaseX, releaseY);
 					
-					double deg = Math.toDegrees(Math.atan2(releaseX - x1, releaseY - y1));
-					double deg2 = -1;
+					double deg = getAngle(releaseX, releaseY, x1, y1);
 					
-					if(releaseX - x1 > 0){
-						if(releaseY - y1 > 0) {
-							//Q4 +,-
-							deg2 = deg + 270;
-						}else{
-							//Q1 +,+
-							deg2 = deg - 90;
-						}
-					}else {
-						if(releaseY - y1 > 0) {
-							//Q3 -,-
-							deg2 = Math.abs(deg + 90) + 180;
-						}else{
-							//Q2 -,+
-							deg2 = Math.abs(deg + 180) + 90;
-						}
-					}
-					
-					System.out.println(deg2);
+					System.out.println(deg);
 					
 					x1 = releaseX;
 					y1 = releaseY;
 				}
 				addDot(x1, y1);
+			}else if(mode == 2) {
+				if(startPointSet) {
+					if(x1 == -1 && y1 == -1) {
+						x1 = startPosX;
+						y1 = startPosY;
+					}
+					
+					addLine(x1, y1, releaseX, releaseY);
+					
+					double deg = getAngle(releaseX, releaseY, x1, y1);
+					
+					addProgramPoint(releaseX, releaseY, deg);
+					
+					System.out.println(deg);
+					
+					x1 = releaseX;
+					y1 = releaseY;
+				}else{
+					alert("You must set a start point");
+				}
 			}
 			
 		}else{
@@ -223,20 +345,18 @@ public class MainWindow implements MouseListener, MouseMotionListener, ActionLis
 
 	public void actionPerformed(ActionEvent e) {
 		if(e.getSource() == modeButton) {
-			if(mode == 1) {
-				mode = 0;
-				modeButton.setText("Set Mode to (Continuous)");
-				x1 = -1;
-				y1 = -1;
-				x2 = -1;
-				y2 = -1;
-			}else{
+			if(mode == 0) {
 				mode = 1;
-				modeButton.setText("Set Mode to (Freeform)");
-				x1 = -1;
-				y1 = -1;
-				x2 = -1;
-				y2 = -1;
+				modeButton.setText("Set Mode (Current: Continuous)");
+				toggleGUI();
+			}else if (mode == 1){
+				mode = 2;
+				modeButton.setText("Set Mode (Current: Programming)");
+				toggleGUI();
+			}else if (mode == 2) {
+				mode = 0;
+				modeButton.setText("Set Mode (Current: Freeform)");
+				toggleGUI();
 			}			
 		}
 		
@@ -247,10 +367,190 @@ public class MainWindow implements MouseListener, MouseMotionListener, ActionLis
 				y1 = -1;
 				x2 = -1;
 				y2 = -1;
+				
+				startPointSet = false;
 				canvas.clearShapes();
 				canvas.repaint();
+				programPoints.clear();
 			}
 		}
+		
+		if(e.getSource() == setStartPosButton) {
+			startPointSet = validateStartPos();
+			x1 = -1;
+			y1 = -1;
+			x2 = -1;
+			y2 = -1;
+			canvas.clearShapes();
+			canvas.repaint();
+			programPoints.clear();
+			addProgramPoint(startPosX,startPosY,startPosA);
+			addStartPoint(startPosX, startPosY, startPosA);
+			startPosLabel.setText("Start Pos: "+startPosX+", "+startPosY+" | Start Angle: "+startPosA+"\u00B0");
+		}
+		
+		if(e.getSource() == chckbxStrafe) {
+			if(chckbxStrafe.isSelected()) {
+				strafeTextField.setEditable(true);
+			}else{
+				strafeTextField.setEditable(false);
+			}
+		}
+		
+		if(e.getSource() == strafeTextField) {
+			int angle = validateAngle(strafeTextField.getText());
+			if(angle != -1) {
+				lblStrafeAngle.setText("Strafe Angle (90\u00B0 \u00B1 "+angle+"):");
+			}
+		}
+		
+		if(e.getSource() == programButton) {
+			if(programPoints != null) {
+				int strafeAngle;
+				if(chckbxStrafe.isSelected()) {
+					strafeAngle = validateAngle(strafeTextField.getText());
+				}else{
+					strafeAngle = -1;
+				}
+				CommandProcessor processor = new CommandProcessor(strafeAngle);
+				
+				processor.setPoints(programPoints);
+				processor.process();
+				
+				trySave(processor.getCommands());
+			}
+		}
+	}
+	
+	public void trySave(List<Command> commands) {
+		try {
+			File file = new File(saveTextField.getText());
+			if(file.isDirectory()) {
+				ArrayList<String> commandStr = new ArrayList<String>();
+				for(Command elem : commands) {
+					commandStr.add(elem.command);
+				}
+				
+				CommandWriter writer = new CommandWriter(commandStr,file.getPath());
+				writer.write();
+			}else {
+				alert("Invalid Save Location");
+			}
+		}catch (Exception e) {
+			alert("Invalid Save Location");
+		}
+	}
+	
+	public void addProgramPoint(int x, int y, double a) {
+		ProgramPoint point = new ProgramPoint(x,y,a);
+		programPoints.add(point);
+	}
+	
+	public int validateAngle(String num) {
+		int angle;
+		try {
+			angle = Integer.parseInt(num);
+		}catch (Exception e) {
+			alert("Angle Must Be a Number.");
+			return -1;
+		}
+		
+		if(angle < 0 || angle > 359) {
+			alert("Angle Must Be 0-359");
+			return -1;
+		}
+		
+		return angle;
+	}
+	
+	public boolean validateStartPos() {
+		int xStart,yStart,aStart;
+		try {
+			xStart = Integer.parseInt(startXField.getText());
+			yStart = Integer.parseInt(startYField.getText());
+			aStart = Integer.parseInt(startAField.getText());
+		}catch (Exception e) {
+			alert("Start Position Fields Accepts Whole Numbers Only");
+			return false;
+		}
+		
+		if(xStart < 0 || xStart > 576) {
+			alert("Start X Field Must Be 0-576");
+			return false;
+		}
+		if(yStart < 0 || yStart > 576) {
+			alert("Start Y Field Must Be 0-576");
+			return false;
+		}
+		if(aStart < 0 || aStart > 359) {
+			alert("Start A Field Must Be 0-359");
+			return false;
+		}
+		
+		startPosX = xStart;
+		startPosY = yStart;
+		startPosA = aStart;
+		return true;
+	}
+	
+	public void toggleGUI() {
+		x1 = -1;
+		y1 = -1;
+		x2 = -1;
+		y2 = -1;
+		canvas.clearShapes();
+		canvas.repaint();
+		
+		if(mode == 2) {
+			startXField.setEditable(true);
+			startYField.setEditable(true);
+			startAField.setEditable(true);
+			setStartPosButton.setEnabled(true);
+			chckbxStrafe.setEnabled(true);
+			strafeTextField.setEditable(true);
+			programButton.setEnabled(true);
+			saveTextField.setEditable(true);
+		}else{
+			startPointSet = false;
+			startXField.setEditable(false);
+			startYField.setEditable(false);
+			startAField.setEditable(false);
+			setStartPosButton.setEnabled(false);
+			chckbxStrafe.setEnabled(false);
+			strafeTextField.setEditable(false);
+			programButton.setEnabled(false);
+			saveTextField.setEditable(false);
+		}
+		
+	}
+	
+	public double getAngle(int x1, int y1, int x2, int y2) {
+		double deg = Math.toDegrees(Math.atan2(x1 - x2, y1 - y2));
+		double deg2;
+		
+		if(x1 - x2 > 0){
+			if(y1 - y2 > 0) {
+				//Q4 +,-
+				deg2 = deg + 270;
+			}else{
+				//Q1 +,+
+				deg2 = deg - 90;
+			}
+		}else {
+			if(y1 - y2 > 0) {
+				//Q3 -,-
+				deg2 = Math.abs(deg + 90) + 180;
+			}else{
+				//Q2 -,+
+				deg2 = Math.abs(deg + 180) + 90;
+			}
+		}
+		
+		return deg2;
+	}
+	
+	public void alert(String msg) {
+		JOptionPane.showMessageDialog(frame, msg, "Warning", JOptionPane.WARNING_MESSAGE);
 	}
 }
  

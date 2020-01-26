@@ -7,20 +7,24 @@ package commands;
 import java.text.DecimalFormat;
 
 public class Move extends Command{
-	public static final double PIXPERFOOT = 48;
-	public static final double FTPERREV = 1.04716667;
+	public double PIXPERFOOT = 48;
+	public double FTPERREV = 1.04716667;
 	
 	public double distancePix;
 	public double distanceFt;
 	public double distanceRev;
 	public double power = 1;
 	
-	public Move(double distP) {
+	public Move(double distP, double PPF, double FPR) {
+		PIXPERFOOT = PPF;
+		FTPERREV = FPR;
 		distancePix = distP;
 		calculate();
 	}
 	
-	public Move(int x1, int y1, int x2, int y2) {
+	public Move(int x1, int y1, int x2, int y2, double PPF, double FPR) {
+		PIXPERFOOT = PPF;
+		FTPERREV = FPR;
 		distancePix = Math.sqrt(Math.pow((x1 - x2), 2) + Math.pow((y1 - y2), 2));
 		calculate();
 	}

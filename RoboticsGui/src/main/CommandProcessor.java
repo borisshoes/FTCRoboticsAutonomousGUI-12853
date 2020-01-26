@@ -1,5 +1,4 @@
 /**
- * Virtual High School
  * @author Tyler Viarengo
  */
 
@@ -12,6 +11,7 @@ import commands.Command;
 import commands.Move;
 import commands.Strafe;
 import commands.Turn;
+import shapes.ProgramPoint;
 
 public class CommandProcessor {
 	
@@ -21,9 +21,15 @@ public class CommandProcessor {
 	private int strafeAngle;
 	private int moveAngle = 10;
 	private double currentAngle;
+	private double degreesPerRev;
+	private double feetPerRev;
+	private double pixelsPerFoot;
 	
-	public CommandProcessor(int strafeAngle) {
+	public CommandProcessor(int strafeAngle, double DPR, double FPR, double PPF) {
 		this.strafeAngle = strafeAngle;
+		degreesPerRev = DPR;
+		feetPerRev = FPR;
+		pixelsPerFoot = PPF;
 	}
 	
 	public void setPoints(List<ProgramPoint> list) {
@@ -76,22 +82,22 @@ public class CommandProcessor {
 			if((deltaAngle <= (-90 + strafeAngle) && deltaAngle >= (-90 - strafeAngle)) || (deltaAngle >= (90 - strafeAngle) && deltaAngle <= (90 + strafeAngle)) && strafeAngle != -1) { //Strafe
 				//System.out.println("Strafe");
 				if(deltaAngle < 0) {
-					subcommands.add(new Strafe(distance));
+					subcommands.add(new Strafe(distance, pixelsPerFoot, feetPerRev));
 				}else{
-					subcommands.add(new Strafe(-distance));
+					subcommands.add(new Strafe(-distance, pixelsPerFoot, feetPerRev));
 				}
 			}else if((deltaAngle <= (-180 + moveAngle) && deltaAngle >= (-180 - moveAngle)) || (deltaAngle >= (180 - moveAngle) && deltaAngle <= (180 + moveAngle))) { //Move backwards
 				//System.out.println("Move Backwards");
-				subcommands.add(new Move(-distance));
+				subcommands.add(new Move(-distance, pixelsPerFoot, feetPerRev));
 			}else{ //Turn and move
 				currentAngle = p2.getAngle();
 				//System.out.println("Turn and Move");
-				subcommands.add(new Turn(deltaAngle));
-				subcommands.add(new Move(distance));
+				subcommands.add(new Turn(deltaAngle, degreesPerRev));
+				subcommands.add(new Move(distance, pixelsPerFoot, feetPerRev));
 			}
 		}else{ //Move
 			//System.out.println("Move");
-			subcommands.add(new Move(distance));
+			subcommands.add(new Move(distance, pixelsPerFoot, feetPerRev));
 		}
 		
 		

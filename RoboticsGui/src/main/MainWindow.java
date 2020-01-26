@@ -19,6 +19,7 @@ import javax.swing.JFrame;
 
 import shapes.Dot;
 import shapes.Line;
+import shapes.ProgramPoint;
 import shapes.Shape;
 import shapes.StartPoint;
 
@@ -61,9 +62,13 @@ public class MainWindow implements MouseListener, MouseMotionListener, ActionLis
 	private JButton programButton;
 	private JLabel lblSave;
 	private JTextField saveTextField;
+	private JTextField ftPRevField;
+	private JTextField pxPFtField;
+	private JTextField degPRevField;
 	
 	private boolean startPointSet = false;
 	private boolean drawing = false;
+	private boolean constantsSet = false;
 	private int startPosX;
 	private int startPosY;
 	private int startPosA;
@@ -76,6 +81,9 @@ public class MainWindow implements MouseListener, MouseMotionListener, ActionLis
 	private int releaseX = -1;
 	private int releaseY = -1;
 	private int mode = 0; //0 Freeform, 1 Continuous Line, 2 Programming
+	private double degreesPerRev;
+	private double feetPerRev;
+	private double pixelsPerFoot;
 	
 	private ArrayList<ProgramPoint> programPoints = new ArrayList<ProgramPoint>();
 	
@@ -228,6 +236,38 @@ public class MainWindow implements MouseListener, MouseMotionListener, ActionLis
 		lblSave.setHorizontalAlignment(SwingConstants.CENTER);
 		lblSave.setBounds(10, 469, 259, 20);
 		panel.add(lblSave);
+		
+		JLabel lblConstants = new JLabel("Constants");
+		lblConstants.setHorizontalAlignment(SwingConstants.CENTER);
+		lblConstants.setBounds(86, 331, 100, 14);
+		panel.add(lblConstants);
+		
+		ftPRevField = new JTextField();
+		ftPRevField.setHorizontalAlignment(SwingConstants.CENTER);
+		ftPRevField.setEditable(false);
+		ftPRevField.setBounds(40, 376, 50, 20);
+		panel.add(ftPRevField);
+		ftPRevField.setColumns(10);
+		
+		pxPFtField = new JTextField();
+		pxPFtField.setText("48");
+		pxPFtField.setHorizontalAlignment(SwingConstants.CENTER);
+		pxPFtField.setEditable(false);
+		pxPFtField.setColumns(10);
+		pxPFtField.setBounds(120, 376, 50, 20);
+		panel.add(pxPFtField);
+		
+		degPRevField = new JTextField();
+		degPRevField.setHorizontalAlignment(SwingConstants.CENTER);
+		degPRevField.setEditable(false);
+		degPRevField.setColumns(10);
+		degPRevField.setBounds(200, 376, 50, 20);
+		panel.add(degPRevField);
+		
+		JLabel constantDescriptionLabel = new JLabel("       Feet/Rev         Pixel/Foot      Degrees/Rev");
+		constantDescriptionLabel.setHorizontalAlignment(SwingConstants.CENTER);
+		constantDescriptionLabel.setBounds(10, 351, 259, 14);
+		panel.add(constantDescriptionLabel);
 	}
 	
 	public void addStartPoint(int x, int y, int a) {
@@ -405,14 +445,15 @@ public class MainWindow implements MouseListener, MouseMotionListener, ActionLis
 		}
 		
 		if(e.getSource() == programButton) {
-			if(programPoints != null) {
+			constantsSet = validateConstants();
+			if(programPoints != null && constantsSet) {
 				int strafeAngle;
 				if(chckbxStrafe.isSelected()) {
 					strafeAngle = validateAngle(strafeTextField.getText());
 				}else{
 					strafeAngle = -1;
 				}
-				CommandProcessor processor = new CommandProcessor(strafeAngle);
+				CommandProcessor processor = new CommandProcessor(strafeAngle, degreesPerRev,feetPerRev,pixelsPerFoot);
 				
 				processor.setPoints(programPoints);
 				processor.process();
@@ -493,6 +534,28 @@ public class MainWindow implements MouseListener, MouseMotionListener, ActionLis
 		return true;
 	}
 	
+	public boolean validateConstants() {
+		double DPR, FPR, PPF; //Degrees Per Rev, Feet Per Rev, Pixels Per Foot
+		try {
+			DPR = Double.parseDouble(degPRevField.getText());
+			FPR = Double.parseDouble(ftPRevField.getText());
+			PPF = Double.parseDouble(pxPFtField.getText());
+		}catch (Exception e) {
+			alert("Constant Fields Accepts Numbers Only");
+			return false;
+		}
+		
+		if(DPR < 0 || FPR < 0 || PPF < 0) {
+			alert("Constant Fields Accepts Positive Numbers Only");
+			return false;
+		}
+		
+		degreesPerRev = DPR;
+		feetPerRev = FPR;
+		pixelsPerFoot = PPF;
+		return true;
+	}
+	
 	public void toggleGUI() {
 		x1 = -1;
 		y1 = -1;
@@ -510,6 +573,9 @@ public class MainWindow implements MouseListener, MouseMotionListener, ActionLis
 			strafeTextField.setEditable(true);
 			programButton.setEnabled(true);
 			saveTextField.setEditable(true);
+			ftPRevField.setEditable(true);
+			degPRevField.setEditable(true);
+			pxPFtField.setEditable(true);
 		}else{
 			startPointSet = false;
 			startXField.setEditable(false);
@@ -520,6 +586,9 @@ public class MainWindow implements MouseListener, MouseMotionListener, ActionLis
 			strafeTextField.setEditable(false);
 			programButton.setEnabled(false);
 			saveTextField.setEditable(false);
+			ftPRevField.setEditable(false);
+			degPRevField.setEditable(false);
+			pxPFtField.setEditable(false);
 		}
 		
 	}

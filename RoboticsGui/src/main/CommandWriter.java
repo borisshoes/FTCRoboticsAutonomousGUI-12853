@@ -1,5 +1,4 @@
 /**
- * Virtual High School
  * @author Tyler Viarengo
  */
 

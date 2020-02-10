@@ -458,7 +458,7 @@ public class MainWindow implements MouseListener, MouseMotionListener, ActionLis
 				processor.setPoints(programPoints);
 				processor.process();
 				
-				trySave(processor.getCommands());
+				//trySave(processor.getCommands());
 			}
 		}
 	}

@@ -72,14 +72,19 @@ public class CommandProcessor {
 		ArrayList<Command> subcommands = new ArrayList<Command>();
 		double deltaAngle = (currentAngle - p2.getAngle()) % 360;
 		if(deltaAngle > 180) {
-			deltaAngle = 360 - deltaAngle;
+			deltaAngle = -360 + deltaAngle;
+		}else if(deltaAngle <= -180) {
+			deltaAngle = 360 + deltaAngle;
 		}
+		deltaAngle = -deltaAngle;
 		
-		//System.out.println("dA: "+deltaAngle);
+		//System.out.println("p2A: "+p2.getAngle());
+		System.out.println("dA: "+deltaAngle);
 		double distance = Math.sqrt(Math.pow((p1.getX() - p2.getX()), 2) + Math.pow((p1.getY() - p2.getY()), 2));
 		
-		if(deltaAngle >= moveAngle || deltaAngle <= -moveAngle) {
-			if((deltaAngle <= (-90 + strafeAngle) && deltaAngle >= (-90 - strafeAngle)) || (deltaAngle >= (90 - strafeAngle) && deltaAngle <= (90 + strafeAngle)) && strafeAngle != -1) { //Strafe
+		if(Math.abs(deltaAngle) >= moveAngle && Math.abs(deltaAngle) <= (360 - moveAngle)) {
+			if((Math.abs(90 - Math.abs(deltaAngle)) >= 0 && Math.abs(90 - Math.abs(deltaAngle)) <= strafeAngle) || (Math.abs(270 - Math.abs(deltaAngle)) >= 0 && Math.abs(270 - Math.abs(deltaAngle)) <= strafeAngle) && strafeAngle != -1) { //Strafe
+			//if((deltaAngle <= (-90 + strafeAngle) && deltaAngle >= (-90 - strafeAngle)) || (deltaAngle >= (90 - strafeAngle) && deltaAngle <= (90 + strafeAngle)) && strafeAngle != -1) { //Strafe
 				//System.out.println("Strafe");
 				if(deltaAngle < 0) {
 					subcommands.add(new Strafe(distance, pixelsPerFoot, feetPerRev));

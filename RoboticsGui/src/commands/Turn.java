@@ -15,7 +15,7 @@ public class Turn extends Command{
 	
 	public Turn(double angle, double DPR) {
 		DEGPERREV = DPR;
-		this.angle = angle;
+		this.angle = -angle;
 		calculate();
 	}
 	
